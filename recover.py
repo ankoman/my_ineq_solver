@@ -137,6 +137,7 @@ def load(ctx, path, load_ineqs, load_steps, load_last):
 @click.option("--p-correct", default=1.0, type=float)
 @click.option("--multiple-runs", default=1, type=int)
 @click.option("--certain-correct", default=None, type=int)
+@click.option("--Mr", default=None, type=int)
 def new(
     ctx,
     number_inequalities,
@@ -144,6 +145,7 @@ def new(
     p_correct,
     multiple_runs,
     certain_correct,
+    mr,
 ):
     steps = ctx.obj["steps"]
     step_size = ctx.obj["step_size"]
@@ -169,6 +171,7 @@ def new(
             print_v("")
         print_v(f"Run {i}:")
         propagation_data = sample_inequalities(
+            mr,
             number_faults,
             p_correct,
             max_delta_v=max_delta_v,

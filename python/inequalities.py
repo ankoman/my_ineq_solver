@@ -1,5 +1,6 @@
 from importlib import import_module
 import python.version as version
+import random
 
 python_kyber = import_module(f"python_kyber{version.KYBER_VERSION}")
 from python.helpers import (
@@ -26,6 +27,20 @@ def sample_from_key_bytes(sk_bytes, pk_bytes, e_lists):
     sample = python_kyber.KyberSample.generate_with_key(True, pk, sk, e)
     return sample
 
+def get_ineqsign_w_RandInvalidCoeff(sample, Mr, coeff_index=0):
+    r, _ = calc_error_term(sample)
+    r = reduce_sym_list(r.to_list())
+
+    ### Added codes
+    Nd = 2
+    tau = 2*Mr//Nd
+    zeta = random.randint(0, Nd)
+    r[coeff_index] = r[coeff_index] + zeta*tau - Mr
+
+    if r[coeff_index] <= 0:
+        return IneqType.LE
+    else:
+        return IneqType.GE
 
 def get_ineqsign(sample, coeff_index=0):
     r, _ = calc_error_term(sample)
@@ -35,6 +50,10 @@ def get_ineqsign(sample, coeff_index=0):
     else:
         return IneqType.GE
 
+def get_Axb(sample, coeff_index=0):
+    r, _ = calc_error_term(sample)
+    r = reduce_sym_list(r.to_list())
+    return r[coeff_index]
 
 def extract_inequality_coefficients(sample, coeff_index=0, max_delta_v=None):
     delta_u = calc_delta_u(sample)

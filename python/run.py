@@ -6,7 +6,9 @@ from datetime import datetime
 from python.inequalities import (
     extract_inequality_coefficients,
     get_ineqsign,
+    get_ineqsign,get_ineqsign_w_RandInvalidCoeff,
     Inequality,
+    get_Axb,
 )
 import python.version as version
 from python.propagation_data import (
@@ -101,7 +103,7 @@ def create_graph_inequalities(ineqs, dist):
             )
             corrects += 1
         lineno += 1
-        print_v(f"{lineno}/{total}\t\t", end="\r")
+        #print_v(f"{lineno}/{total}\t\t", end="\r")
     print_v("                                          ")
     print_v(f"Created {total} inequalities, {corrects} are certainly correct, {total-corrects} might be incorrect.")
     print_v("Initializing graph..")
@@ -110,9 +112,11 @@ def create_graph_inequalities(ineqs, dist):
 
 
 def sample_inequalities(
+    Mr,
     number_faults,
     p_correct,
     max_delta_v=None,
+    
     num_certain_correct=None
 ):
     if num_certain_correct is None:
@@ -146,7 +150,9 @@ def sample_inequalities(
                 filtered_cts += 1
             first = False
         sign = get_ineqsign(sample)
-        if i >= ((number_faults - num_certain_correct) * p_correct) + num_certain_correct:
+        sign_w_rand_invalid = get_ineqsign_w_RandInvalidCoeff(sample, Mr)
+        if sign != sign_w_rand_invalid:
+        #if i >= ((number_faults - num_certain_correct) * p_correct) + num_certain_correct:
             is_correct = False
             p_correct_ineq = p_correct
             errors += 1
@@ -157,9 +163,20 @@ def sample_inequalities(
         else:
             p_correct_ineq = 1 if i < num_certain_correct else p_correct
         inequalities.append(Inequality(coeffs, sign, b, is_correct, p_correct_ineq))
+
+        # ### Chennel 2 leak
+        # Axb = get_Axb(sample)
+        # Mr = 79
+        # if -Mr < Axb and Axb < Mr:
+        #     inequalities.append(Inequality(coeffs, IneqType.LE, Axb+b+Mr, is_correct, p_correct_ineq))
+        #     inequalities.append(Inequality(coeffs, IneqType.GE, Axb+b-Mr, is_correct, p_correct_ineq))
+        # else:
+        #     inequalities.append(Inequality(coeffs, IneqType.LE, Axb+b-Mr, is_correct, p_correct_ineq))
+        #     inequalities.append(Inequality(coeffs, IneqType.GE, Axb+b+Mr, is_correct, p_correct_ineq))
         no_ineqs += 1
-        print_v(f"{i}/{number_faults}\t\t", end="\r")
-    assert check_inequalities(key, inequalities)
+        if i % 5000 == 0:
+            print_v(f"{i}/{number_faults}\t\t", end="\r")
+    #assert check_inequalities(key, inequalities)
     print_v("                                          ")
     print_v("Number of inequalities: ", no_ineqs)
     print_v(f"Wrong inequalities: {errors}")

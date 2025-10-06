@@ -1,0 +1,25 @@
+#!/bin/bash
+
+Mr=25
+p=0.874
+for n_ineq in $(seq 15000 5000 60000); do
+    for runs in $(seq 1 1 5); do
+        python3 recover.py --steps 20 --save-dir "Mr_${Mr}_nineq_${n_ineq}_runs${runs}" new --p-correct $p --certain-correct 0 --Mr $Mr --max-delta-v 5 "$n_ineq"
+    done
+done
+
+Mr=50
+p=0.775
+for n_ineq in $(seq 45000 5000 100000); do
+    for runs in $(seq 1 1 5); do
+        python3 recover.py --steps 20 --save-dir "Mr_${Mr}_nineq_${n_ineq}_runs${runs}" new --p-correct $p --certain-correct 0 --Mr $Mr --max-delta-v 5 "$n_ineq"
+    done
+done
+
+Mr=100
+p=0.6833
+for n_ineq in $(seq 45000 5000 100000); do
+    for runs in $(seq 1 1 5); do
+        python3 recover.py --steps 20 --save-dir "Mr_${Mr}_nineq_${n_ineq}_runs${runs}" new --p-correct $p --certain-correct 0 --Mr $Mr --max-delta-v 5 "$n_ineq"
+    done
+done
