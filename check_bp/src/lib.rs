@@ -56,3 +56,15 @@ fn check_bp640(_: Python, m: &PyModule) -> PyResult<()> {
 
     Ok(())
 }
+
+#[pymodule]
+#[cfg(feature = "dsa44")]
+fn check_bp256(_: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<check_graph::CheckGraph>()?;
+    m.add_class::<bin_tree::PyBinMultTreeInt>()?;
+    m.add_class::<bin_tree::PyBinMultTreeList>()?;
+    m.add_function(wrap_pyfunction!(test_fft_2, m)?).unwrap();
+    m.add_function(wrap_pyfunction!(test_fft_3, m)?).unwrap();
+
+    Ok(())
+}

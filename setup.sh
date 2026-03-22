@@ -16,6 +16,6 @@ echo "Building and installing check_bp.."
 cd check_bp && ./setup.sh
 cd ..
 
-echo "Building and installing rust_python_kyber.."
-cd rust_python_kyber && ./setup.sh
-cd ..
+# echo "Building and installing rust_python_kyber.."
+# cd rust_python_kyber && ./setup.sh
+# cd ..

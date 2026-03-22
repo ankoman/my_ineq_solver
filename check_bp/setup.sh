@@ -1,6 +1,6 @@
 #!/bin/sh
 
-Vs="512"
+Vs="256"
 Cwd=$(pwd)
 for V in $Vs; do
     echo "Installing $V.."

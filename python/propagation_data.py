@@ -15,8 +15,7 @@ from python.helpers import (
     print_v,
 )
 
-python_kyber = import_module(f"python_kyber{version.KYBER_VERSION}")
-
+#python_kyber = import_module(f"python_kyber{version.KYBER_VERSION}")
 
 def sort_key_indices(probs_dict):
     sorted_props = sorted(probs_dict, key=lambda v: probs_dict[v][1])
@@ -341,7 +340,7 @@ class PropagationData:
 
     @classmethod
     def new(cls, key, inequalities, filtered_cts, max_delta_v, lwe_instance):
-        assert lwe_instance.is_solution(key)
+        #assert lwe_instance.is_solution(key)
         return cls(
             {},
             key,

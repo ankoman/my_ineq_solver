@@ -1,4 +1,4 @@
-KYBER_VERSION = "512"
+KYBER_VERSION = "256"
 
 
 def set_version(ver):

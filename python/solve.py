@@ -15,7 +15,7 @@ from python.helpers import (
 # Inefficient but enough for testing
 from python.simple_gauss import simple_gauss
 
-python_kyber = import_module(f"python_kyber{version.KYBER_VERSION}")
+#python_kyber = import_module(f"python_kyber{version.KYBER_VERSION}")
 
 
 def substitute_s(lwe_instance, known_s):

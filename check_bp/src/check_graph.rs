@@ -19,6 +19,8 @@ const K: usize = 1536;
 const K: usize = 1024;
 #[cfg(feature = "frodo640")]
 const K: usize = 1280;
+#[cfg(feature = "dsa44")]
+const K: usize = 256;
 
 #[cfg(feature = "frodo640")]
 const N: usize = 4096;
@@ -31,6 +33,8 @@ const ETA: usize = 5;
 const ETA: usize = 7;
 #[cfg(feature = "frodo640")]
 const ETA: usize = 25;
+#[cfg(feature = "dsa44")]
+const ETA: usize = 5;
 
 create_exception!(check_bp, PyCheckGraphError, pyo3::exceptions::PyException);
 

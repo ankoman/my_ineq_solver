@@ -1,4 +1,4 @@
 scipy
 numpy
 click
-maturin
+maturin==1.7.0

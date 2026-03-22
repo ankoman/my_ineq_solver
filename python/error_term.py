@@ -1,7 +1,7 @@
 from importlib import import_module
 import python.version as version
 
-python_kyber = import_module(f"python_kyber{version.KYBER_VERSION}")
+#python_kyber = import_module(f"python_kyber{version.KYBER_VERSION}")
 from python.helpers import transpose
 
 

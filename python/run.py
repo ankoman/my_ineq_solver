@@ -24,7 +24,7 @@ from python.helpers import (
 )
 
 check_bp = import_module(f"check_bp{version.KYBER_VERSION}")
-python_kyber = import_module(f"python_kyber{version.KYBER_VERSION}")
+#python_kyber = import_module(f"python_kyber{version.KYBER_VERSION}")
 
 verbose = True
 
@@ -64,10 +64,10 @@ def propagate(
             print_v("Found correct key.")
             success = True
             break
-        if step_data.recovered_coefficients >= len(key) // 2:
-            print_v("Found enough correct coefficients")
-            success = True
-            break
+        # if step_data.recovered_coefficients >= len(key) // 2:
+        #     print_v("Found enough correct coefficients")
+        #     success = True
+        #     break
     propagation_data.set_end(datetime.now())
     if success:
         print_v("BP alone: Success!")
