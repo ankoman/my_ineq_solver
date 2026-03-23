@@ -1,6 +1,9 @@
+from math import dist
 from typing import NamedTuple
 import copy, sys
 import numpy as np
+import matplotlib.pyplot as plt
+
 from python.inequalities import (
     extract_inequality_coefficients,
     get_ineqsign,
@@ -22,9 +25,12 @@ from python.run import (
 )
 from python.solve import solve
 from recover import process_propagation_data
+from dsa_dist import get_dist_z
 
 beta = 78
 gamma1 = 2**17
+q = 2**23 - 2**13 + 1
+NO_X = True
 
 class RejectedSample(NamedTuple):
     coeff: int
@@ -62,8 +68,10 @@ def get_rejected_sample(f) -> RejectedSample:
     coeff_idx = int(f.readline().split(":")[1])
     poly_idx = int(f.readline().split(":")[1])
     c = format_poly(f.readline().split(":")[1])
-    f.readline()
-    x = [format_poly(f.readline()) for _ in range(4)]
+    x = None
+    if not NO_X:
+        f.readline()
+        x = [format_poly(f.readline()) for _ in range(4)]
     return RejectedSample(coeff, coeff_idx, poly_idx, c, x)
 
 def test_ineq(sample: RejectedSample, s1: list[list[int]]) -> bool:
@@ -91,21 +99,27 @@ def test_ineq(sample: RejectedSample, s1: list[list[int]]) -> bool:
 
 
 def main():
-    STEPS = 20
+    STEPS = 2
     STEP_SIZE = 1
     USE_BEST_STEP = True
+    SCA_OBS = True
+    PERFECT_INEQ = True
+
     if len(sys.argv) != 2:
         print(f"Usage: {sys.argv[0]} <n_rej>")
         sys.exit(1)
     n_rej = int(sys.argv[1])
 
-    with open("./testdata100k.dat") as f:
+    with open("./testdata1M_noX.dat") as f:
         s1 = [format_poly(f.readline()) for _ in range(4)]
         sk = f.readline()
         rejected_samples = [get_rejected_sample(f) for _ in range(n_rej)]
 
     inequalities = []
+    list_obs = []
     attacked_s1_idx = 0
+    dist_rej_z = get_dist_z()[-2*beta:-1]
+
     for sample in rejected_samples:
         # if not test_ineq(sample, s1):
         #     print("Inequality not satisfied for sample:", sample)
@@ -113,15 +127,50 @@ def main():
         if attacked_s1_idx == sample.poly_idx:
             lb = -beta
             ub = beta
-
-            if sample.coeff > 0:
-                lb = sample.coeff - gamma1
-            else:
-                ub = sample.coeff + gamma1 - 1
-            
             ci = xtimes(sample.c, 255-sample.coeff_idx)
-            inequalities.append(Inequality(ci, IneqType.LE, ub, True, 1))
-            inequalities.append(Inequality(ci, IneqType.GE, lb, True, 1))
+
+            if SCA_OBS:
+                observed = (((256*q + sample.coeff) % (256*q))  - (gamma1 - beta)) % 256
+                if PERFECT_INEQ:
+                    start = 60
+                    stop = 80
+                    if (start <= observed <= stop) and sample.coeff > 0:
+                        lb = observed - beta
+                        inequalities.append(Inequality(ci, IneqType.GE, lb, True, 1))
+                        #inequalities.append(Inequality(ci, IneqType.LE, beta, True, 1))
+                    elif (156 - start >= observed >= 156 - stop) and sample.coeff < 0:
+                        ub = observed - beta - 1
+                        inequalities.append(Inequality(ci, IneqType.LE, ub, True, 1))
+                        #inequalities.append(Inequality(ci, IneqType.GE, -beta, True, 1))
+
+                    else:
+                        continue
+                else:
+                    if (58 <= observed <= 98):
+                        prob_pos = dist_rej_z[observed]
+                        prob_neg = dist_rej_z[156 - observed]
+                        denom = prob_pos + prob_neg
+                        prob_pos = prob_pos / denom
+                        prob_neg = prob_neg / denom
+                        inequalities.append(Inequality(ci, IneqType.GE, observed - beta, "UNK", prob_pos))
+                            #inequalities.append(Inequality(ci, IneqType.LE, observed - beta - 1, "UNK", prob_neg))
+                    else:
+                        continue
+
+                # if sample.coeff < 0:
+                #     list_obs.append(observed)
+            else:
+                if sample.coeff > 0:
+                    lb = sample.coeff - gamma1
+                    inequalities.append(Inequality(ci, IneqType.GE, lb, True, 1))
+                else:
+                    ub = sample.coeff + gamma1 - 1
+                    inequalities.append(Inequality(ci, IneqType.LE, ub, True, 1))
+
+            
+    
+    # plt.hist(list_obs, bins=100)
+    # plt.savefig("obs_hist.png")
     
     propagation_data = PropagationData.new(
         s1[attacked_s1_idx][::-1], inequalities, 0, 0, 0

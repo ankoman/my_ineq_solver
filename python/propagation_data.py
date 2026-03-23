@@ -499,12 +499,12 @@ class PropagationData:
             f.write(f"ineqs = {len(self.inequalities)}\n")
             f.write(f"correct_ineqs = {self.num_corrects}\n")
             f.write(f"recovered_coefficients = {self.recovered_coefficients}")
-        with open(self.dir + "/lwe_instance.py", "a") as f:
-            f.write(f"a = {self.lwe_instance.a}\n")
-            f.write(f"b = {self.lwe_instance.b}\n")
-            f.write(f"e = {self.key[:self.kyber_ver]}\n")
-            f.write(f"s = {self.key[self.kyber_ver:]}\n")
-            f.write("key = e + s\n")
+        # with open(self.dir + "/lwe_instance.py", "a") as f:
+        #     f.write(f"a = {self.lwe_instance.a}\n")
+        #     f.write(f"b = {self.lwe_instance.b}\n")
+        #     f.write(f"e = {self.key[:self.kyber_ver]}\n")
+        #     f.write(f"s = {self.key[self.kyber_ver:]}\n")
+        #     f.write("key = e + s\n")
         print_v("Saving inequalities..")
         # Everthing but elegant
         if self.inequalities:

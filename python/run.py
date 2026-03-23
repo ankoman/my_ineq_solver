@@ -59,7 +59,12 @@ def propagate(
         print_v(f"Average entropy is {step_data.avg_entropy}.")
         print_v(f"Maximal entropy is {step_data.max_entropy}.")
         print_v("")
+        count = sum(a == b for a, b in zip(key, step_data.guessed_key))
+        print(f'{count} coefficients correct')
         print_v(f"{step_data.recovered_coefficients} coefficients recovered")
+        print(f'distance: {step_data.distance_to_correct}')
+        print(f'guessed: {step_data.guessed_key}')
+        #print(key)
         if step_data.guessed_key == key:
             print_v("Found correct key.")
             success = True

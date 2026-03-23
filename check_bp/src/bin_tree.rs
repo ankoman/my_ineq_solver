@@ -29,7 +29,7 @@ pub fn pointwise_mult(op0: &Vec<f64>, op1: &Vec<f64>) -> Vec<f64> {
 
 impl<T: Clone> BinMultTree<T> {
     pub fn new(leaves: Vec<T>, mult: fn(&T, &T) -> T) -> Self {
-        assert_eq!(leaves.len() % 2, 0);
+        //assert_eq!(leaves.len() % 2, 0);
         assert!(leaves.len() >= 2);
         let downward_tree = vec![leaves];
         let upward_tree = None;
