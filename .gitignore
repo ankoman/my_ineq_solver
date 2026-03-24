@@ -4,3 +4,6 @@ data/
 target/
 *.o
 *.a
+*.pkl
+*.png
+*.dat
