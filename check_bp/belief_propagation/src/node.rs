@@ -42,12 +42,12 @@ where
         &self.name
     }
     pub fn add_edge(&mut self, to: NodeIndex) -> BPResult<()> {
-        if self.connections.contains(&to) {
-            return Err(BPError::new(
-                "Node::add_edge".to_owned(),
-                format!("Connection -> {} already exists", to),
-            ));
-        }
+        // if self.connections.contains(&to) {
+        //     return Err(BPError::new(
+        //         "Node::add_edge".to_owned(),
+        //         format!("Connection -> {} already exists", to),
+        //     ));
+        // }
         if let Some(n) = self.node_function.number_inputs() {
             if self.connections.len() >= n {
                 return Err(BPError::new("Node::add_edge".to_owned(), format!("Wrong number ({}) of connections (needed: {}) while trying to add edge to {}", self.connections.len()+1, n, to)));
