@@ -1,6 +1,7 @@
 from math import dist
 from typing import NamedTuple
 import copy, sys
+import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -99,88 +100,110 @@ def test_ineq(sample: RejectedSample, s1: list[list[int]]) -> bool:
 
 
 def main():
-    STEPS = 2
+    STEPS = 20
     STEP_SIZE = 1
     USE_BEST_STEP = True
     SCA_OBS = True
-    PERFECT_INEQ = True
+    PERFECT_INEQ = False
 
     if len(sys.argv) != 2:
-        print(f"Usage: {sys.argv[0]} <n_rej>")
+        print(f"Usage: {sys.argv[0]} <n_rej|--pck>")
         sys.exit(1)
-    n_rej = int(sys.argv[1])
 
-    with open("./testdata1M_noX.dat") as f:
-        s1 = [format_poly(f.readline()) for _ in range(4)]
-        sk = f.readline()
-        rejected_samples = [get_rejected_sample(f) for _ in range(n_rej)]
+    arg = sys.argv[1]
+    try:
+        n_rej = int(arg)
+        is_numeric_arg = True
+    except ValueError:
+        is_numeric_arg = False
 
-    inequalities = []
-    list_obs = []
     attacked_s1_idx = 0
-    dist_rej_z = get_dist_z()[-2*beta:-1]
+    if is_numeric_arg:
+        with open("./testdata1M_noX.dat") as f:
+            s1 = [format_poly(f.readline()) for _ in range(4)]
+            sk = f.readline()
+            rejected_samples = [get_rejected_sample(f) for _ in range(n_rej)]
 
-    for sample in rejected_samples:
-        # if not test_ineq(sample, s1):
-        #     print("Inequality not satisfied for sample:", sample)
+        inequalities = []
+        list_obs = []
+        dist_rej_z = get_dist_z()[-2*beta:-1]
 
-        if attacked_s1_idx == sample.poly_idx:
-            lb = -beta
-            ub = beta
-            ci = xtimes(sample.c, 255-sample.coeff_idx)
+        for sample in rejected_samples:
+            # if not test_ineq(sample, s1):
+            #     print("Inequality not satisfied for sample:", sample)
 
-            if SCA_OBS:
-                observed = (((256*q + sample.coeff) % (256*q))  - (gamma1 - beta)) % 256
-                if PERFECT_INEQ:
-                    start = 60
-                    stop = 80
-                    if (start <= observed <= stop) and sample.coeff > 0:
-                        lb = observed - beta
+            if attacked_s1_idx == sample.poly_idx:
+                lb = -beta
+                ub = beta
+                ci = xtimes(sample.c, 255-sample.coeff_idx)
+
+                if SCA_OBS:
+                    observed = (((256*q + sample.coeff) % (256*q))  - (gamma1 - beta)) % 256
+                    if PERFECT_INEQ:
+                        start = 60
+                        stop = 80
+                        if (start <= observed <= stop) and sample.coeff > 0:
+                            lb = observed - beta
+                            inequalities.append(Inequality(ci, IneqType.GE, lb, True, 1))
+                            #inequalities.append(Inequality(ci, IneqType.LE, beta, True, 1))
+                        elif (156 - start >= observed >= 156 - stop) and sample.coeff < 0:
+                            ub = observed - beta - 1
+                            inequalities.append(Inequality(ci, IneqType.LE, ub, True, 1))
+                            #inequalities.append(Inequality(ci, IneqType.GE, -beta, True, 1))
+
+                        else:
+                            continue
+                    else:
+                        if (58 <= observed <= 98):
+                            prob_pos = dist_rej_z[observed + 15]
+                            prob_neg = dist_rej_z[156 - observed - 15]
+                            denom = prob_pos + prob_neg
+                            prob_pos = prob_pos / denom
+                            prob_neg = prob_neg / denom
+                            inequalities.append(Inequality(ci, IneqType.GE, observed - beta, "UNK", prob_pos))
+                                #inequalities.append(Inequality(ci, IneqType.LE, observed - beta - 1, "UNK", prob_neg))
+                        else:
+                            continue
+
+                    # if sample.coeff < 0:
+                    #     list_obs.append(observed)
+                else:
+                    if sample.coeff > 0:
+                        lb = sample.coeff - gamma1
                         inequalities.append(Inequality(ci, IneqType.GE, lb, True, 1))
-                        #inequalities.append(Inequality(ci, IneqType.LE, beta, True, 1))
-                    elif (156 - start >= observed >= 156 - stop) and sample.coeff < 0:
-                        ub = observed - beta - 1
+                    else:
+                        ub = sample.coeff + gamma1 - 1
                         inequalities.append(Inequality(ci, IneqType.LE, ub, True, 1))
-                        #inequalities.append(Inequality(ci, IneqType.GE, -beta, True, 1))
 
-                    else:
-                        continue
-                else:
-                    if (58 <= observed <= 98):
-                        prob_pos = dist_rej_z[observed]
-                        prob_neg = dist_rej_z[156 - observed]
-                        denom = prob_pos + prob_neg
-                        prob_pos = prob_pos / denom
-                        prob_neg = prob_neg / denom
-                        inequalities.append(Inequality(ci, IneqType.GE, observed - beta, "UNK", prob_pos))
-                            #inequalities.append(Inequality(ci, IneqType.LE, observed - beta - 1, "UNK", prob_neg))
-                    else:
-                        continue
+                
+        
+        # plt.hist(list_obs, bins=100)
+        # plt.savefig("obs_hist.png")
+        
+        propagation_data = PropagationData.new(
+            s1[attacked_s1_idx][::-1], inequalities, 0, 0, 0
+        )
 
-                # if sample.coeff < 0:
-                #     list_obs.append(observed)
-            else:
-                if sample.coeff > 0:
-                    lb = sample.coeff - gamma1
-                    inequalities.append(Inequality(ci, IneqType.GE, lb, True, 1))
-                else:
-                    ub = sample.coeff + gamma1 - 1
-                    inequalities.append(Inequality(ci, IneqType.LE, ub, True, 1))
+        with open("bp_state.pkl", "wb") as f:
+            pickle.dump({"s1": s1,"propagation_data": propagation_data,"inequalities": inequalities},f)
 
-            
-    
-    # plt.hist(list_obs, bins=100)
-    # plt.savefig("obs_hist.png")
-    
-    propagation_data = PropagationData.new(
-        s1[attacked_s1_idx][::-1], inequalities, 0, 0, 0
-    )
+
+    elif arg == "--pkl":
+        with open("bp_state.pkl", "rb") as f:
+            state = pickle.load(f)
+            s1 = state["s1"]
+            propagation_data = state["propagation_data"]
+            inequalities = state["inequalities"]
+
+
     ### run_with_inequality
     key_priori_dist = {i: np.float64(1/5) for i in range(-2, 3)}
+    # key_priori_dist = {-2: np.float64(0.3), -1: np.float64(0.15), 0: np.float64(0.1), 1: np.float64(0.15), 2: np.float64(0.3)}
     g = create_graph_inequalities(
         inequalities,
         key_priori_dist
     )
+        
     success_bp = propagate(
         s1[attacked_s1_idx][::-1],
         g,
