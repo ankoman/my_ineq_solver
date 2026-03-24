@@ -8,6 +8,7 @@ use pyo3::{create_exception, PyResult};
 use rustfft::{num_complex::Complex, FftPlanner};
 use std::collections::HashMap;
 use std::convert::TryInto;
+use std::time::Instant;
 
 #[cfg(not(feature = "dsa44"))]
 const N: usize = 1024;
@@ -163,13 +164,17 @@ impl CheckGraph {
         } else {
             CmpOperator::GreaterEq
         };
+        let coeff_array: [i16; N] = coefficients.try_into().unwrap();
+
         let check_node: CheckNode<K, ETA> =
-            CheckNode::new(coefficients.try_into().unwrap(), value, op, N);
+            CheckNode::new(coeff_array, value, op, N);
         let idx = self.g.add_node(name, Box::new(check_node));
         for n in 0..self.var_nodes {
-            self.g
-                .add_edge(n, idx)
-                .map_err(|e| CheckGraphError::from_bp(e))?;
+            if coeff_array[n] != 0 {
+                self.g
+                    .add_edge(n, idx)
+                    .map_err(|e| CheckGraphError::from_bp(e))?;
+            }
         }
         Ok(idx)
     }
@@ -196,16 +201,27 @@ impl CheckGraph {
         } else {
             CmpOperator::GreaterEq
         };
+        let coeff_array: [i16; N] = coefficients.try_into().unwrap();
 
+        let _t0 = Instant::now();
         let check_node: ProbCheckNode<K, ETA> =
-            ProbCheckNode::new(coefficients.try_into().unwrap(), value, op, N, prob_correct);
+            ProbCheckNode::new(coeff_array, value, op, N, prob_correct);
+        //eprintln!("new: {:?}", _t0.elapsed());
 
+        let _t1 = Instant::now();
         let idx = self.g.add_node(name, Box::new(check_node));
+        //eprintln!("add_node: {:?}", _t1.elapsed());
+
+        let _t2 = Instant::now();
         for n in 0..self.var_nodes {
-            self.g
-                .add_edge(n, idx)
-                .map_err(|e| CheckGraphError::from_bp(e))?;
+            if coeff_array[n] != 0 {
+                self.g
+                    .add_edge(n, idx)
+                    .map_err(|e| CheckGraphError::from_bp(e))?;
+            }
         }
+        //eprintln!("add_edge loop: {:?}", _t2.elapsed());
+        
         Ok(idx)
     }
 

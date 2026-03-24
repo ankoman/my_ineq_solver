@@ -123,19 +123,19 @@ impl<const K: usize, const ETA: usize> NodeFunction<i16, CheckMsg<ETA>, CtrlMsg,
     }
     fn initialize(&mut self, connections: Vec<NodeIndex>) -> BPResult<()> {
         //TODO: Ensure connections are sorted
-        if connections.len() != K {
-            Err(BPError::new(
-                "ProbCheckNode::initialize".to_owned(),
-                format!(
-                    "Wrong number ({}) of connections given ({}).",
-                    K,
-                    connections.len()
-                ),
-            ))
-        } else {
+        // if connections.len() != K {
+        //     Err(BPError::new(
+        //         "ProbCheckNode::initialize".to_owned(),
+        //         format!(
+        //             "Wrong number ({}) of connections given ({}).",
+        //             K,
+        //             connections.len()
+        //         ),
+        //     ))
+        // } else {
             self.connections = connections;
             Ok(())
-        }
+        //}
     }
     fn reset(&mut self) -> BPResult<()> {
         Ok(())

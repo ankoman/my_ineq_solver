@@ -79,19 +79,19 @@ where
                 format!("Node {} is already initialized", self.name),
             ));
         }
-        if let Some(n) = self.node_function.number_inputs() {
-            if self.connections.len() != n {
-                return Err(BPError::new(
-                    "Node::initialize".to_owned(),
-                    format!(
-                        "Node {} has wrong number ({}) of connections (needs: {})",
-                        self.name,
-                        self.connections.len(),
-                        n
-                    ),
-                ));
-            }
-        }
+        // if let Some(n) = self.node_function.number_inputs() {
+        //     if self.connections.len() != n {
+        //         return Err(BPError::new(
+        //             "Node::initialize".to_owned(),
+        //             format!(
+        //                 "Node {} has wrong number ({}) of connections (needs: {})",
+        //                 self.name,
+        //                 self.connections.len(),
+        //                 n
+        //             ),
+        //         ));
+        //     }
+        // }
         self.is_initialized = true;
         self.node_function.initialize(self.connections.clone())
     }

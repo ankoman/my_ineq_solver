@@ -106,7 +106,7 @@ def create_graph_inequalities(ineqs, dist):
             )
             corrects += 1
         lineno += 1
-        print_v(f"{lineno}/{total}\t\t", end="\r")
+        #print_v(f"{lineno}/{total}\t\t", end="\r")
     print_v("                                          ")
     print_v(f"Created {total} inequalities, {corrects} are certainly correct, {total-corrects} might be incorrect.")
     print_v("Initializing graph..")
