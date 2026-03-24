@@ -11,7 +11,6 @@ checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 [[package]]
 name = "belief_propagation"
 version = "0.1.0"
-source = "git+https://github.com/juliusjh/belief_propagation.git?branch=main#1fc6445e1ca34fd30550114c0d1254e26750f095"
 dependencies = [
  "crossbeam",
  "itertools",

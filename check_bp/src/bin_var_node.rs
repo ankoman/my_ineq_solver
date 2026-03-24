@@ -17,13 +17,45 @@ impl std::default::Default for CtrlMsgA {
         Self::None
     }
 }
-
+fn check_valid(data: &[f64], label: &str) {
+    for (i, &p) in data.iter().enumerate() {
+        if !p.is_finite() {
+            panic!("{}: non-finite at {}: {:?}", label, i, data);
+        }
+        if p < 0.0 {
+            panic!("{}: negative at {}: {:?}", label, i, data);
+        }
+    }
+}
+fn clamp_negative(data: &mut [f64]) {
+    for p in data.iter_mut() {
+        if p.is_finite() && *p < 1e-12{
+            *p = 1e-12;
+        }
+    }
+}
+fn is_all_zero(data: &[f64]) -> bool {
+    data.iter().all(|&p| p == 0.0)
+}
 fn mult_msgs<const ETA: usize>(op0: &CheckMsg<ETA>, op1: &CheckMsg<ETA>) -> CheckMsg<ETA> {
+
+    //check_valid(&op0.data, "op0 before mult");
+    //check_valid(&op1.data, "op1 before mult");
     let mut data = [0 as f64; ETA];
     for (i, (p0, p1)) in op0.data.iter().zip(op1.data.iter()).enumerate() {
         data[i] = p0 * p1;
     }
+    //check_valid(&data, "data after mult");
+    clamp_negative(&mut data);
+
     let mut res = CheckMsg::from_data(data);
+
+    if is_all_zero(&data) {
+        eprintln!("all-zero after mult");
+        eprintln!("op0  = {:?}", op0.data);
+        eprintln!("op1  = {:?}", op1.data);
+        eprintln!("prod = {:?}", data);
+    }
     res.normalize().expect("Failed to normalize.");
     res
 }

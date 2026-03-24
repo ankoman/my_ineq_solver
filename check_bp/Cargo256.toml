@@ -13,6 +13,7 @@ crate-type = ["cdylib"]
 [dependencies]
 rustfft = "5.0.1"
 crossbeam = "0.8.0"
+belief_propagation = { path = "./belief_propagation" }
 
 [dependencies.pyo3]
 version = "0.15.1"
@@ -21,11 +22,6 @@ version = "0.15.1"
 dsa44 = []
 extension-module = ["pyo3/extension-module"]
 default = ["extension-module", "dsa44"]
-
-[dependencies.belief_propagation]
-git = "https://github.com/juliusjh/belief_propagation.git"
-branch = "main"
-features = []
 
 [profile.release]
 panic = "abort"

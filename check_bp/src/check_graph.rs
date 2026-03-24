@@ -9,7 +9,7 @@ use rustfft::{num_complex::Complex, FftPlanner};
 use std::collections::HashMap;
 use std::convert::TryInto;
 
-#[cfg(not(feature = "frodo640"))]
+#[cfg(not(feature = "dsa44"))]
 const N: usize = 1024;
 #[cfg(feature = "kyber1024")]
 const K: usize = 2048;
@@ -22,8 +22,8 @@ const K: usize = 1280;
 #[cfg(feature = "dsa44")]
 const K: usize = 256;
 
-#[cfg(feature = "frodo640")]
-const N: usize = 4096;
+#[cfg(feature = "dsa44")]
+const N: usize = 256;
 
 #[cfg(feature = "kyber1024")]
 const ETA: usize = 5;
@@ -196,8 +196,10 @@ impl CheckGraph {
         } else {
             CmpOperator::GreaterEq
         };
+
         let check_node: ProbCheckNode<K, ETA> =
             ProbCheckNode::new(coefficients.try_into().unwrap(), value, op, N, prob_correct);
+
         let idx = self.g.add_node(name, Box::new(check_node));
         for n in 0..self.var_nodes {
             self.g
