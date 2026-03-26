@@ -104,13 +104,14 @@ def main():
     STEP_SIZE = 1
     USE_BEST_STEP = True
     SCA_OBS = True
-    PERFECT_INEQ = False
+    PERFECT_INEQ = True
 
-    if len(sys.argv) != 2:
-        print(f"Usage: {sys.argv[0]} <n_rej|--pck>")
+    if len(sys.argv) != 3:
+        print(f"Usage: {sys.argv[0]} <attacked_s1_idx> <n_rej|--pck>")
         sys.exit(1)
 
-    arg = sys.argv[1]
+    attacked_s1_idx = int(sys.argv[1])
+    arg = sys.argv[2]
     try:
         n_rej = int(arg)
         is_numeric_arg = True
@@ -119,10 +120,13 @@ def main():
 
     attacked_s1_idx = 0
     if is_numeric_arg:
-        with open("./testdata1M_noX.dat") as f:
+        with open("./testdata10M.dat") as f:
             s1 = [format_poly(f.readline()) for _ in range(4)]
-            sk = f.readline()
-            rejected_samples = [get_rejected_sample(f) for _ in range(n_rej)]
+        #     sk = f.readline()
+        #     rejected_samples = [get_rejected_sample(f) for _ in range(n_rej)]
+
+        with open("rejected_samples_0.pkl", "rb") as f:
+            rejected_samples = pickle.load(f)["rejected_samples"][:n_rej]
 
         inequalities = []
         list_obs = []
@@ -140,8 +144,8 @@ def main():
                 if SCA_OBS:
                     observed = (((256*q + sample.coeff) % (256*q))  - (gamma1 - beta)) % 256
                     if PERFECT_INEQ:
-                        start = 60
-                        stop = 80
+                        start = 70
+                        stop = 78
                         if (start <= observed <= stop) and sample.coeff > 0:
                             lb = observed - beta
                             inequalities.append(Inequality(ci, IneqType.GE, lb, True, 1))
@@ -154,9 +158,9 @@ def main():
                         else:
                             continue
                     else:
-                        if (58 <= observed <= 98):
-                            prob_pos = dist_rej_z[observed + 15]
-                            prob_neg = dist_rej_z[156 - observed - 15]
+                        if (88 <= observed <= 93):
+                            prob_pos = dist_rej_z[observed]
+                            prob_neg = dist_rej_z[156 - observed]
                             denom = prob_pos + prob_neg
                             prob_pos = prob_pos / denom
                             prob_neg = prob_neg / denom
@@ -197,8 +201,8 @@ def main():
 
 
     ### run_with_inequality
-    key_priori_dist = {i: np.float64(1/5) for i in range(-2, 3)}
-    # key_priori_dist = {-2: np.float64(0.3), -1: np.float64(0.15), 0: np.float64(0.1), 1: np.float64(0.15), 2: np.float64(0.3)}
+    #key_priori_dist = {i: np.float64(1/5) for i in range(-2, 3)}
+    key_priori_dist = {-2: np.float64(0.3), -1: np.float64(0.15), 0: np.float64(0.1), 1: np.float64(0.15), 2: np.float64(0.3)}
     g = create_graph_inequalities(
         inequalities,
         key_priori_dist
