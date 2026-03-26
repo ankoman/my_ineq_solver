@@ -4,6 +4,7 @@ import copy, sys
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
+import random
 
 from python.inequalities import (
     extract_inequality_coefficients,
@@ -100,11 +101,11 @@ def test_ineq(sample: RejectedSample, s1: list[list[int]]) -> bool:
 
 
 def main():
-    STEPS = 20
+    STEPS = 40
     STEP_SIZE = 1
     USE_BEST_STEP = True
     SCA_OBS = True
-    PERFECT_INEQ = True
+    PERFECT_INEQ = False
 
     if len(sys.argv) != 3:
         print(f"Usage: {sys.argv[0]} <attacked_s1_idx> <n_rej|--pck>")
@@ -122,11 +123,11 @@ def main():
     if is_numeric_arg:
         with open("./testdata10M.dat") as f:
             s1 = [format_poly(f.readline()) for _ in range(4)]
-        #     sk = f.readline()
-        #     rejected_samples = [get_rejected_sample(f) for _ in range(n_rej)]
+            sk = f.readline()
+            rejected_samples = [get_rejected_sample(f) for _ in range(n_rej)]
 
-        with open("rejected_samples_0.pkl", "rb") as f:
-            rejected_samples = pickle.load(f)["rejected_samples"][:n_rej]
+        # with open("rejected_samples_0.pkl", "rb") as f:
+        #     rejected_samples = pickle.load(f)["rejected_samples"][:n_rej]
 
         inequalities = []
         list_obs = []
@@ -143,31 +144,32 @@ def main():
 
                 if SCA_OBS:
                     observed = (((256*q + sample.coeff) % (256*q))  - (gamma1 - beta)) % 256
-                    if PERFECT_INEQ:
-                        start = 70
-                        stop = 78
-                        if (start <= observed <= stop) and sample.coeff > 0:
-                            lb = observed - beta
-                            inequalities.append(Inequality(ci, IneqType.GE, lb, True, 1))
-                            #inequalities.append(Inequality(ci, IneqType.LE, beta, True, 1))
-                        elif (156 - start >= observed >= 156 - stop) and sample.coeff < 0:
-                            ub = observed - beta - 1
-                            inequalities.append(Inequality(ci, IneqType.LE, ub, True, 1))
-                            #inequalities.append(Inequality(ci, IneqType.GE, -beta, True, 1))
-
-                        else:
-                            continue
+                    start = 0
+                    stop = 160
+                    p = 0.6
+                    if (start <= observed <= stop) and sample.coeff > 0:
+                        lb = observed - beta
+                        ineq = IneqType.GE if random.random() < p else IneqType.LE
+                        inequalities.append(Inequality(ci, ineq, lb, True, p))
+                        #inequalities.append(Inequality(ci, IneqType.LE, beta, True, 1))
+                    elif (156 - start >= observed >= 156 - stop) and sample.coeff < 0:
+                        ub = observed - beta - 1
+                        ineq = IneqType.LE if random.random() < p else IneqType.GE
+                        inequalities.append(Inequality(ci, ineq, ub, True, p))
+                        #inequalities.append(Inequality(ci, IneqType.GE, -beta, True, 1))
                     else:
-                        if (88 <= observed <= 93):
-                            prob_pos = dist_rej_z[observed]
-                            prob_neg = dist_rej_z[156 - observed]
-                            denom = prob_pos + prob_neg
-                            prob_pos = prob_pos / denom
-                            prob_neg = prob_neg / denom
-                            inequalities.append(Inequality(ci, IneqType.GE, observed - beta, "UNK", prob_pos))
-                                #inequalities.append(Inequality(ci, IneqType.LE, observed - beta - 1, "UNK", prob_neg))
-                        else:
-                            continue
+                        continue
+                    # else:
+                    #     if (50 <= observed <= 110):
+                    #         prob_pos = dist_rej_z[observed]
+                    #         prob_neg = dist_rej_z[156 - observed]
+                    #         denom = prob_pos + prob_neg
+                    #         prob_pos = prob_pos / denom
+                    #         prob_neg = prob_neg / denom
+                    #         inequalities.append(Inequality(ci, IneqType.GE, observed - beta, "UNK", prob_pos))
+                    #             #inequalities.append(Inequality(ci, IneqType.LE, observed - beta - 1, "UNK", prob_neg))
+                    #     else:
+                    #         continue
 
                     # if sample.coeff < 0:
                     #     list_obs.append(observed)
