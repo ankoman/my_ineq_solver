@@ -278,7 +278,7 @@ fn fetch_results_parallel(
 ) -> BPResult<HashMap<usize, Option<(HashMap<i16, Probability>, f64)>>> {
     crossbeam::scope(
         |scope| -> BPResult<HashMap<usize, Option<(HashMap<i16, Probability>, f64)>>> {
-            let nodes_per_thread = nodes.len() / thread_count;
+            let nodes_per_thread = (nodes.len() / thread_count).max(1);
             let mut results = HashMap::new();
             let mut handles = Vec::new();
             for nodes_list in nodes.chunks(nodes_per_thread) {
