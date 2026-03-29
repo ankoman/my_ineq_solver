@@ -105,14 +105,14 @@ def main():
     STEP_SIZE = 1
     USE_BEST_STEP = True
     SCA_OBS = True
-    PERFECT_INEQ = False
 
-    if len(sys.argv) != 3:
-        print(f"Usage: {sys.argv[0]} <attacked_s1_idx> <n_rej|--pck>")
+    if len(sys.argv) != 4:
+        print(f"Usage: {sys.argv[0]} <attacked_s1_idx> <p_ineq> <n_rej|--pck>")
         sys.exit(1)
 
     attacked_s1_idx = int(sys.argv[1])
-    arg = sys.argv[2]
+    p_ineq = float(sys.argv[2])
+    arg = sys.argv[3]
     try:
         n_rej = int(arg)
         is_numeric_arg = True
@@ -138,25 +138,23 @@ def main():
             #     print("Inequality not satisfied for sample:", sample)
 
             if attacked_s1_idx == sample.poly_idx:
-                lb = -beta
-                ub = beta
                 ci = xtimes(sample.c, 255-sample.coeff_idx)
 
                 if SCA_OBS:
-                    observed = (((256*q + sample.coeff) % (256*q))  - (gamma1 - beta)) % 256
+                    observed = (((256*q + abs(sample.coeff)) % (256*q))  - (gamma1 - beta)) % 256
                     start = 0
                     stop = 160
-                    p = 0.6
-                    if (start <= observed <= stop) and sample.coeff > 0:
-                        lb = observed - beta
-                        ineq = IneqType.GE if random.random() < p else IneqType.LE
-                        inequalities.append(Inequality(ci, ineq, lb, True, p))
+                    if start <= observed <= stop:
+                        ineq = IneqType.LE if sample.coeff < 0 else IneqType.GE
+                        if random.random() > p_ineq:
+                            ineq = IneqType.LE if ineq == IneqType.GE else IneqType.GE
+                        if ineq == IneqType.GE:
+                            bound = observed - beta
+                        else:
+                            bound = (156 - observed) - beta - 1
+
+                        inequalities.append(Inequality(ci, ineq, bound, True, p_ineq))
                         #inequalities.append(Inequality(ci, IneqType.LE, beta, True, 1))
-                    elif (156 - start >= observed >= 156 - stop) and sample.coeff < 0:
-                        ub = observed - beta - 1
-                        ineq = IneqType.LE if random.random() < p else IneqType.GE
-                        inequalities.append(Inequality(ci, ineq, ub, True, p))
-                        #inequalities.append(Inequality(ci, IneqType.GE, -beta, True, 1))
                     else:
                         continue
                     # else:
