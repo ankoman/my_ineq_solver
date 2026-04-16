@@ -126,7 +126,7 @@ fn derive_from_inequality_greater_prob<const ETA: usize>(
     //coeff*v+sum >=< value
     for v in -(ETA as i16) / 2..=(ETA as i16) / 2 {
         let vc = coeff * v;
-        let p_le = pdf_le(&dist_sum, value - vc);
+        let p_le = pdf_le(&dist_sum, (-value-1) - vc);
         let p_ge = pdf_ge(&dist_sum, value - vc);
         result[v] += prob_incorrect*p_le + prob_correct*p_ge;
     }
@@ -146,7 +146,7 @@ fn derive_from_inequality_smaller_prob<const ETA: usize>(
     for v in -(ETA as i16) / 2..=(ETA as i16) / 2 {
         let vc = coeff * v;
         let p_le = pdf_le(&dist_sum, value - vc);
-        let p_ge = pdf_ge(&dist_sum, value - vc);
+        let p_ge = pdf_ge(&dist_sum, (-value-1) - vc);
         result[v] += prob_correct*p_le + prob_incorrect*p_ge;
     }
     result.normalize().expect("Failed to normalize");
