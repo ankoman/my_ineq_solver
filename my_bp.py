@@ -105,7 +105,10 @@ def main():
     STEP_SIZE = 1
     USE_BEST_STEP = True
     SCA_OBS = True
-
+    PROB = False
+    START = 0
+    STOP = 160
+    
     if len(sys.argv) != 4:
         print(f"Usage: {sys.argv[0]} <attacked_s1_idx> <p_ineq> <n_rej|--pck>")
         sys.exit(1)
@@ -120,6 +123,8 @@ def main():
         is_numeric_arg = False
 
     attacked_s1_idx = 0
+    print(f"Correct prob: {p_ineq}, attacked s1 index: {attacked_s1_idx}, filt_start: {START}, filt_stop: {STOP}")
+
     if is_numeric_arg:
         with open("./testdata10M.dat") as f:
             s1 = [format_poly(f.readline()) for _ in range(4)]
@@ -131,7 +136,8 @@ def main():
 
         inequalities = []
         list_obs = []
-        dist_rej_z = get_dist_z()[-2*beta:-1]
+        dist_rej_z = get_dist_z()[-2*beta:]
+        dist_rej_z = np.append(dist_rej_z, 0)
 
         for sample in rejected_samples:
             # if not test_ineq(sample, s1):
@@ -141,46 +147,46 @@ def main():
                 ci = xtimes(sample.c, 255-sample.coeff_idx)
 
                 if SCA_OBS:
-                    observed = (((256*q + abs(sample.coeff)) % (256*q))  - (gamma1 - beta)) % 256
-                    start = 0
-                    stop = 160
-                    if start <= observed <= stop:
-                        ineq = IneqType.LE if sample.coeff < 0 else IneqType.GE
-                        if random.random() > p_ineq:
-                            ineq = IneqType.LE if ineq == IneqType.GE else IneqType.GE
-                        if ineq == IneqType.GE:
-                            bound = observed - beta
-                        else:
-                            bound = (156 - observed) - beta - 1
+                    l1 = (((256*q + sample.coeff) % (256*q))  - (gamma1 - beta)) % 256 ## LSB8(z)
+                    l2 = (((256*q - sample.coeff) % (256*q))  - (gamma1 - beta)) % 256 ## LSB8(-z)
+                    p_ineq_ge = dist_rej_z[l1]/(dist_rej_z[l2]+dist_rej_z[l1])
+                    # if p_ineq_ge < 0.53:
+                    #     p_ineq_ge = 0.53
+                    # print(f"sample.coeff: {sample.coeff}")
+                    # print(f"l1: {l1}, l2: {l2}, {dist_rej_z[l1]/(dist_rej_z[l2]+dist_rej_z[l1])}")
+                    # input()
 
-                        inequalities.append(Inequality(ci, ineq, bound, True, p_ineq))
-                        #inequalities.append(Inequality(ci, IneqType.LE, beta, True, 1))
+
+                    if START <= l1 <= STOP:
+                        if PROB:
+                            # ineq = IneqType.LE if sample.coeff < 0 else IneqType.GE
+                            # if random.random() > p_ineq:
+                            #     ineq = IneqType.LE if ineq == IneqType.GE else IneqType.GE
+                            # if ineq == IneqType.LE:
+                            #     bound = -bound - 1
+                            #     pass
+                            inequalities.append(Inequality(ci, IneqType.GE, bound, "UNK", p_ineq))
+                            
+                        else:
+                            if l2 > l1:
+                                bound = l1 - beta
+                                inequalities.append(Inequality(ci, IneqType.GE, bound, "UNK", p_ineq_ge))
+                            else:
+                                bound = l2 - beta
+                                inequalities.append(Inequality(ci, IneqType.LE, beta, "UNK", 1-p_ineq_ge))
+
                     else:
                         continue
-                    # else:
-                    #     if (50 <= observed <= 110):
-                    #         prob_pos = dist_rej_z[observed]
-                    #         prob_neg = dist_rej_z[156 - observed]
-                    #         denom = prob_pos + prob_neg
-                    #         prob_pos = prob_pos / denom
-                    #         prob_neg = prob_neg / denom
-                    #         inequalities.append(Inequality(ci, IneqType.GE, observed - beta, "UNK", prob_pos))
-                    #             #inequalities.append(Inequality(ci, IneqType.LE, observed - beta - 1, "UNK", prob_neg))
-                    #     else:
-                    #         continue
 
-                    # if sample.coeff < 0:
-                    #     list_obs.append(observed)
                 else:
                     if sample.coeff > 0:
                         lb = sample.coeff - gamma1
-                        inequalities.append(Inequality(ci, IneqType.GE, lb, True, 1))
+                        inequalities.append(Inequality(ci, IneqType.GE, lb, True, p_ineq))
                     else:
                         ub = sample.coeff + gamma1 - 1
-                        inequalities.append(Inequality(ci, IneqType.LE, ub, True, 1))
+                        inequalities.append(Inequality(ci, IneqType.LE, ub, True, p_ineq))
 
                 
-        
         # plt.hist(list_obs, bins=100)
         # plt.savefig("obs_hist.png")
         
@@ -201,8 +207,12 @@ def main():
 
 
     ### run_with_inequality
-    #key_priori_dist = {i: np.float64(1/5) for i in range(-2, 3)}
-    key_priori_dist = {-2: np.float64(0.3), -1: np.float64(0.15), 0: np.float64(0.1), 1: np.float64(0.15), 2: np.float64(0.3)}
+    key_priori_dist = {i: np.float64(1/5) for i in range(-2, 3)}
+    #key_priori_dist = {-2: np.float64(0.3), -1: np.float64(0.15), 0: np.float64(0.1), 1: np.float64(0.15), 2: np.float64(0.3)}
+    #key_priori_dist = {-2: np.float64(0.4), -1: np.float64(0.2), 0: np.float64(0.1), 1: np.float64(0.2), 2: np.float64(0.4)}
+
+    print(f"Using key priori distribution: {key_priori_dist}")
+
     g = create_graph_inequalities(
         inequalities,
         key_priori_dist
