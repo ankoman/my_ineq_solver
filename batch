@@ -1,0 +1,7 @@
+#!/bin/bash
+
+traces=60000
+mkdir "$traces"
+for p in $(seq 0.1 0.1 0.9); do
+    python3 my_bp.py 0 "$p" "$traces" > "$traces/$p.txt"
+done
